@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.enterprise.submission.mapper.SubmissionMapper">
+
+  <!-- 조사 제출 관리: TBINSTSURV.CHARGE SQL lineage 샘플 -->
+  <resultMap id="submissionMap" type="com.example.enterprise.submission.domain.SubmissionRecord">
+    <id property="id" column="ID"/>
+    <result property="instCd" column="INSTCD"/>
+    <result property="userId" column="USERID"/>
+    <result property="name" column="NAME"/>
+    <result property="snapshotName" column="CHARGE"/>
+    <result property="status" column="STATUS"/>
+    <result property="createdAt" column="CREATED_AT"/>
+    <result property="updatedAt" column="UPDATED_AT"/>
+  </resultMap>
+
+  <select id="findById" parameterType="string" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE ID = #{id}
+  </select>
+
+  <select id="findLatestSubmittedByInstCd" parameterType="string" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE INSTCD = #{instCd}
+       AND STATUS = 'SUBMITTED'
+     ORDER BY UPDATED_AT DESC
+  </select>
+
+  <select id="findSubmittedByInstCds" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE STATUS = 'SUBMITTED'
+       AND INSTCD IN
+       <foreach collection="list" item="instCd" open="(" close=")" separator=",">
+         #{instCd}
+       </foreach>
+  </select>
+
+  <update id="updateNameOnly">
+    UPDATE TBINSTSURV
+       SET NAME = #{name},
+           UPDATED_BY = #{updatedBy},
+           UPDATED_AT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <update id="updateSnapshot">
+    UPDATE TBINSTSURV
+       SET CHARGE = #{snapshotName},
+           UPDATED_BY = #{updatedBy},
+           UPDATED_AT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <update id="updateStatus">
+    UPDATE TBINSTSURV
+       SET STATUS = #{status},
+           UPDATED_BY = #{updatedBy},
+           UPDATED_AT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <select id="findByCondition1" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 1: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition2" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 2: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition3" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 3: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition4" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 4: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition5" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 5: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition6" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 6: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition7" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 7: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition8" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 8: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition9" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 9: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition10" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 10: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition11" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 11: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition12" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 12: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition13" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 13: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition14" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 14: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <select id="findByCondition15" parameterType="map" resultMap="submissionMap">
+    SELECT ID, INSTCD, USERID, NAME, CHARGE, STATUS, CREATED_AT, UPDATED_AT
+      FROM TBINSTSURV
+     WHERE 1 = 1
+     <if test="instCd != null and instCd != ''">
+       AND INSTCD = #{instCd}
+     </if>
+     <if test="status != null and status != ''">
+       AND STATUS = #{status}
+     </if>
+     <if test="name != null and name != ''">
+       AND NAME LIKE '%' || #{name} || '%'
+     </if>
+     /* condition 15: snapshot mismatch check */
+     <if test="mismatchOnly == true">
+       AND NVL(NAME, ' ') <![CDATA[<>]]> NVL(CHARGE, ' ')
+     </if>
+  </select>
+
+  <insert id="insertAudit">
+    INSERT INTO TBAUDITLOG (ACTIONNM, PAYLOAD, CREATED_AT)
+    VALUES (#{action}, #{auditMap}, CURRENT_TIMESTAMP)
+  </insert>
+</mapper>
