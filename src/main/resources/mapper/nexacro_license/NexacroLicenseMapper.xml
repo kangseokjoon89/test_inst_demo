@@ -1,0 +1,547 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.training.ops.nexacro_license.mapper.NexacroLicenseMapper">
+  <resultMap id="nexacroLicenseMap" type="com.training.ops.nexacro_license.domain.NexacroLicenseRecord">
+    <id property="id" column="ID"/>
+    <result property="instCd" column="INSTCD"/>
+    <result property="userId" column="USERID"/>
+    <result property="currentName" column="CURRENT_NAME"/>
+    <result property="snapshotName" column="SNAPSHOT_NAME"/>
+    <result property="status" column="STATUS"/>
+    <result property="submitDt" column="SUBMIT_DT"/>
+    <result property="changeDt" column="CHANGE_DT"/>
+    <result property="batchYn" column="BATCH_YN"/>
+    <result property="skipReason" column="SKIP_REASON"/>
+    <result property="sourceRevision" column="SOURCE_REVISION"/>
+    <result property="screenId" column="SCREEN_ID"/>
+    <result property="transactionId" column="TRANSACTION_ID"/>
+    <result property="updatedBy" column="UPDATED_BY"/>
+    <result property="memo" column="MEMO"/>
+  </resultMap>
+
+  <select id="selectSubmittedForInstitutions" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID,
+           A.INSTCD,
+           A.USERID,
+           U.USERNM AS CURRENT_NAME,
+           A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS,
+           TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT,
+           A.BATCH_YN,
+           A.SKIP_REASON,
+           A.SOURCE_REVISION,
+           A.SCREEN_ID,
+           A.TRANSACTION_ID,
+           A.UPDATED_BY,
+           A.MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U
+        ON A.INSTCD = U.INSTCD
+     WHERE A.STATUS = 'SUBMITTED'
+       AND A.INSTCD IN
+       <foreach collection="instCds" item="instCd" open="(" separator="," close=")">
+         #{instCd}
+       </foreach>
+  </select>
+
+  <insert id="insertOperatorTrace" parameterType="map">
+    INSERT INTO TBAI_OPERATOR_TRACE
+           (TRACE_ID, MODULE_KEY, SCREEN_ID, API_PATH, MEMO, CREATED_AT)
+    VALUES (#{traceId}, #{moduleKey}, #{screenId}, #{apiPath}, #{memo}, CURRENT_TIMESTAMP)
+  </insert>
+
+  <select id="selectForSearch" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN, A.SKIP_REASON,
+           A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY, A.MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+      LEFT JOIN TBAUDITHIST H ON A.ID = H.TARGET_ID
+     WHERE 1 = 1
+       <if test="instCd != null and instCd != ''">
+         AND A.INSTCD = #{instCd}
+       </if>
+       <if test="status != null and status != ''">
+         AND A.STATUS = #{status}
+       </if>
+       <if test="mismatchOnly == true">
+         AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+       </if>
+     ORDER BY A.INSTCD, A.CHANGE_DT DESC
+  </select>
+
+  <update id="updateForSearch" parameterType="com.training.ops.nexacro_license.domain.NexacroLicenseRecord">
+    UPDATE TBCLIENTCONF
+       SET UPDATED_BY = #{updatedBy},
+           MEMO = #{memo},
+           CHANGE_DT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <insert id="insertSearchTrace" parameterType="map">
+    INSERT INTO TBAI_SQL_TRACE (TRACE_ID, SQL_ID, TABLE_NAME, COLUMN_NAME, CREATED_AT)
+    VALUES (#{traceId}, 'selectForSearch', 'TBCLIENTCONF', 'LICENSEURL', CURRENT_TIMESTAMP)
+  </insert>
+
+  <select id="selectForDetail" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN, A.SKIP_REASON,
+           A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY, A.MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+      LEFT JOIN TBAUDITHIST H ON A.ID = H.TARGET_ID
+     WHERE 1 = 1
+       <if test="instCd != null and instCd != ''">
+         AND A.INSTCD = #{instCd}
+       </if>
+       <if test="status != null and status != ''">
+         AND A.STATUS = #{status}
+       </if>
+       <if test="mismatchOnly == true">
+         AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+       </if>
+     ORDER BY A.INSTCD, A.CHANGE_DT DESC
+  </select>
+
+  <update id="updateForDetail" parameterType="com.training.ops.nexacro_license.domain.NexacroLicenseRecord">
+    UPDATE TBCLIENTCONF
+       SET UPDATED_BY = #{updatedBy},
+           MEMO = #{memo},
+           CHANGE_DT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <insert id="insertDetailTrace" parameterType="map">
+    INSERT INTO TBAI_SQL_TRACE (TRACE_ID, SQL_ID, TABLE_NAME, COLUMN_NAME, CREATED_AT)
+    VALUES (#{traceId}, 'selectForDetail', 'TBCLIENTCONF', 'LICENSEURL', CURRENT_TIMESTAMP)
+  </insert>
+
+  <select id="selectForSubmit" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN, A.SKIP_REASON,
+           A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY, A.MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+      LEFT JOIN TBAUDITHIST H ON A.ID = H.TARGET_ID
+     WHERE 1 = 1
+       <if test="instCd != null and instCd != ''">
+         AND A.INSTCD = #{instCd}
+       </if>
+       <if test="status != null and status != ''">
+         AND A.STATUS = #{status}
+       </if>
+       <if test="mismatchOnly == true">
+         AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+       </if>
+     ORDER BY A.INSTCD, A.CHANGE_DT DESC
+  </select>
+
+  <update id="updateForSubmit" parameterType="com.training.ops.nexacro_license.domain.NexacroLicenseRecord">
+    UPDATE TBCLIENTCONF
+       SET UPDATED_BY = #{updatedBy},
+           MEMO = #{memo},
+           CHANGE_DT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <insert id="insertSubmitTrace" parameterType="map">
+    INSERT INTO TBAI_SQL_TRACE (TRACE_ID, SQL_ID, TABLE_NAME, COLUMN_NAME, CREATED_AT)
+    VALUES (#{traceId}, 'selectForSubmit', 'TBCLIENTCONF', 'LICENSEURL', CURRENT_TIMESTAMP)
+  </insert>
+
+  <select id="selectForChange" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN, A.SKIP_REASON,
+           A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY, A.MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+      LEFT JOIN TBAUDITHIST H ON A.ID = H.TARGET_ID
+     WHERE 1 = 1
+       <if test="instCd != null and instCd != ''">
+         AND A.INSTCD = #{instCd}
+       </if>
+       <if test="status != null and status != ''">
+         AND A.STATUS = #{status}
+       </if>
+       <if test="mismatchOnly == true">
+         AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+       </if>
+     ORDER BY A.INSTCD, A.CHANGE_DT DESC
+  </select>
+
+  <update id="updateForChange" parameterType="com.training.ops.nexacro_license.domain.NexacroLicenseRecord">
+    UPDATE TBCLIENTCONF
+       SET UPDATED_BY = #{updatedBy},
+           MEMO = #{memo},
+           CHANGE_DT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <insert id="insertChangeTrace" parameterType="map">
+    INSERT INTO TBAI_SQL_TRACE (TRACE_ID, SQL_ID, TABLE_NAME, COLUMN_NAME, CREATED_AT)
+    VALUES (#{traceId}, 'selectForChange', 'TBCLIENTCONF', 'LICENSEURL', CURRENT_TIMESTAMP)
+  </insert>
+
+  <select id="selectForDiagnose" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN, A.SKIP_REASON,
+           A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY, A.MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+      LEFT JOIN TBAUDITHIST H ON A.ID = H.TARGET_ID
+     WHERE 1 = 1
+       <if test="instCd != null and instCd != ''">
+         AND A.INSTCD = #{instCd}
+       </if>
+       <if test="status != null and status != ''">
+         AND A.STATUS = #{status}
+       </if>
+       <if test="mismatchOnly == true">
+         AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+       </if>
+     ORDER BY A.INSTCD, A.CHANGE_DT DESC
+  </select>
+
+  <update id="updateForDiagnose" parameterType="com.training.ops.nexacro_license.domain.NexacroLicenseRecord">
+    UPDATE TBCLIENTCONF
+       SET UPDATED_BY = #{updatedBy},
+           MEMO = #{memo},
+           CHANGE_DT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <insert id="insertDiagnoseTrace" parameterType="map">
+    INSERT INTO TBAI_SQL_TRACE (TRACE_ID, SQL_ID, TABLE_NAME, COLUMN_NAME, CREATED_AT)
+    VALUES (#{traceId}, 'selectForDiagnose', 'TBCLIENTCONF', 'LICENSEURL', CURRENT_TIMESTAMP)
+  </insert>
+
+  <select id="selectForReconcile" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN, A.SKIP_REASON,
+           A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY, A.MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+      LEFT JOIN TBAUDITHIST H ON A.ID = H.TARGET_ID
+     WHERE 1 = 1
+       <if test="instCd != null and instCd != ''">
+         AND A.INSTCD = #{instCd}
+       </if>
+       <if test="status != null and status != ''">
+         AND A.STATUS = #{status}
+       </if>
+       <if test="mismatchOnly == true">
+         AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+       </if>
+     ORDER BY A.INSTCD, A.CHANGE_DT DESC
+  </select>
+
+  <update id="updateForReconcile" parameterType="com.training.ops.nexacro_license.domain.NexacroLicenseRecord">
+    UPDATE TBCLIENTCONF
+       SET UPDATED_BY = #{updatedBy},
+           MEMO = #{memo},
+           CHANGE_DT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <insert id="insertReconcileTrace" parameterType="map">
+    INSERT INTO TBAI_SQL_TRACE (TRACE_ID, SQL_ID, TABLE_NAME, COLUMN_NAME, CREATED_AT)
+    VALUES (#{traceId}, 'selectForReconcile', 'TBCLIENTCONF', 'LICENSEURL', CURRENT_TIMESTAMP)
+  </insert>
+
+  <select id="selectForHistory" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN, A.SKIP_REASON,
+           A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY, A.MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+      LEFT JOIN TBAUDITHIST H ON A.ID = H.TARGET_ID
+     WHERE 1 = 1
+       <if test="instCd != null and instCd != ''">
+         AND A.INSTCD = #{instCd}
+       </if>
+       <if test="status != null and status != ''">
+         AND A.STATUS = #{status}
+       </if>
+       <if test="mismatchOnly == true">
+         AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+       </if>
+     ORDER BY A.INSTCD, A.CHANGE_DT DESC
+  </select>
+
+  <update id="updateForHistory" parameterType="com.training.ops.nexacro_license.domain.NexacroLicenseRecord">
+    UPDATE TBCLIENTCONF
+       SET UPDATED_BY = #{updatedBy},
+           MEMO = #{memo},
+           CHANGE_DT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <insert id="insertHistoryTrace" parameterType="map">
+    INSERT INTO TBAI_SQL_TRACE (TRACE_ID, SQL_ID, TABLE_NAME, COLUMN_NAME, CREATED_AT)
+    VALUES (#{traceId}, 'selectForHistory', 'TBCLIENTCONF', 'LICENSEURL', CURRENT_TIMESTAMP)
+  </insert>
+
+  <select id="selectForExport" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN, A.SKIP_REASON,
+           A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY, A.MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+      LEFT JOIN TBAUDITHIST H ON A.ID = H.TARGET_ID
+     WHERE 1 = 1
+       <if test="instCd != null and instCd != ''">
+         AND A.INSTCD = #{instCd}
+       </if>
+       <if test="status != null and status != ''">
+         AND A.STATUS = #{status}
+       </if>
+       <if test="mismatchOnly == true">
+         AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+       </if>
+     ORDER BY A.INSTCD, A.CHANGE_DT DESC
+  </select>
+
+  <update id="updateForExport" parameterType="com.training.ops.nexacro_license.domain.NexacroLicenseRecord">
+    UPDATE TBCLIENTCONF
+       SET UPDATED_BY = #{updatedBy},
+           MEMO = #{memo},
+           CHANGE_DT = CURRENT_TIMESTAMP
+     WHERE ID = #{id}
+  </update>
+
+  <insert id="insertExportTrace" parameterType="map">
+    INSERT INTO TBAI_SQL_TRACE (TRACE_ID, SQL_ID, TABLE_NAME, COLUMN_NAME, CREATED_AT)
+    VALUES (#{traceId}, 'selectForExport', 'TBCLIENTCONF', 'LICENSEURL', CURRENT_TIMESTAMP)
+  </insert>
+
+  <select id="selectTracePoint1" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-1: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_1'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint2" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-2: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_2'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint3" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-3: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_3'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint4" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-4: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_4'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint5" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-5: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_5'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint6" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-6: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_6'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint7" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-7: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_7'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint8" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-8: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_8'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint9" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-9: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_9'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint10" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-10: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_10'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint11" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-11: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_11'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint12" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-12: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_12'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint13" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-13: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_13'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint14" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-14: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_14'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint15" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-15: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_15'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint16" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-16: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_16'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+
+  <select id="selectTracePoint17" parameterType="map" resultMap="nexacroLicenseMap">
+    SELECT A.ID, A.INSTCD, A.USERID, U.USERNM AS CURRENT_NAME, A.LICENSEURL AS SNAPSHOT_NAME,
+           A.STATUS, TO_CHAR(A.SUBMIT_DT, 'YYYY-MM-DD') AS SUBMIT_DT,
+           TO_CHAR(A.CHANGE_DT, 'YYYY-MM-DD') AS CHANGE_DT, A.BATCH_YN,
+           A.SKIP_REASON, A.SOURCE_REVISION, A.SCREEN_ID, A.TRANSACTION_ID, A.UPDATED_BY,
+           'trace-point-17: 클라이언트환경설정' AS MEMO
+      FROM TBCLIENTCONF A
+      JOIN TBUSER U ON A.INSTCD = U.INSTCD
+     WHERE A.SCREEN_ID = #{screenId}
+       AND A.TRANSACTION_ID = 'nexacro_license_tx_17'
+       AND NVL(U.USERNM, ' ') <![CDATA[<>]]> NVL(A.LICENSEURL, ' ')
+  </select>
+</mapper>
