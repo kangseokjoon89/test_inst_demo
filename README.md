@@ -1,305 +1,171 @@
-# AI Enterprise Logic-Rich Demo
+# AI 운영 소스 분석 학습용 시스템
 
-이 저장소는 AI 개발자에게 전달할 수 있는 학습용 엔터프라이즈 샘플 시스템입니다.
-단순 파일 개수 늘리기가 아니라, 각 파일에 의미 있는 업무 로직, SQL lineage, 화면 transaction, 이력 추적 규칙을 포함합니다.
+이 프로젝트는 비개발자가 운영 중인 프로그램의 로직과 오류 원인을 질문했을 때 AI가 답변할 수 있는지 검증하기 위한 합성 샘플입니다.
+단순 파일 수 증가가 아니라, 화면 이벤트, Java 계층, MyBatis SQL, Tibero JOIN 분석, 변경 이력, snapshot 설계 의도를 서로 연결하도록 만들었습니다.
 
-## 목표
+## 반영한 실제 요구 성향
 
-- 비개발자의 운영 문의를 코드와 DB 흐름으로 분석하는 AI 시스템 검증
-- GitHub/SVN 소스 연계 후 RAG/Graph/SQL lineage 품질 테스트
-- 제출완료 snapshot 불일치, 담당자명 변경, 재제출, 배치 동기화 문제 재현
+- Tibero 기준 일반 SELECT 중심 분석
+- PL/SQL보다 조회 SQL과 조인 기반 확인 선호
+- 서브쿼리 없이 단계적으로 검증 가능한 SQL 선호
+- Nexacro HTML5 / launch.html / xadl licenseurl 변경 흐름 포함
+- DBeaver에서 바로 확인 가능한 운영 SQL 포함
+- SVN 또는 GitHub 변경 이력 추적 시나리오 포함
+- 제출완료기관, TBUSER.USERNM, TBINSTSURV.CHARGE 불일치 원인 분석 포함
+- PM 관점에서 AI 개발자에게 전달 가능한 명세 문서 포함
 
-## 모듈 1: user
+## 모듈 목록
 
-- 설명: 사용자/담당자 관리
-- 대표 테이블: TBUSER
-- 대표 컬럼: USERNM
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+### 1. 담당자 기준정보
+- key: `user_charge`
+- table: `TBUSER`
+- column: `USERNM`
+- screen: `담당자관리`
+- api: `/user/charge`
+- issue: 기관 담당자 변경 후 제출 snapshot과 기준정보가 달라지는 상황
 
-## 모듈 2: institution
+### 2. 기관별 조사 제출
+- key: `institution_survey`
+- table: `TBINSTSURV`
+- column: `CHARGE`
+- screen: `기관조사제출`
+- api: `/survey/institution`
+- issue: 제출완료기관의 CHARGE가 제출 당시 값으로 남는 상황
 
-- 설명: 기관 정보 관리
-- 대표 테이블: TBINST
-- 대표 컬럼: INSTNM
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+### 3. 조사 마스터
+- key: `survey_master`
+- table: `TBSURVEY`
+- column: `SURVEYNM`
+- screen: `조사기본정보`
+- api: `/survey/master`
+- issue: 조사명 변경 후 기존 제출 이력의 조사명이 과거 값으로 보이는 상황
 
-## 모듈 3: survey
+### 4. 제출 상태 전이
+- key: `submit_status`
+- table: `TBSUBMITSTAT`
+- column: `STATUSNM`
+- screen: `제출상태관리`
+- api: `/submit/status`
+- issue: 반려 후 재제출 과정에서 상태명이 화면과 리포트에서 다르게 보이는 상황
 
-- 설명: 조사 기본정보 관리
-- 대표 테이블: TBSURVEY
-- 대표 컬럼: SURVEYNM
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+### 5. 승인 결재 흐름
+- key: `approval_flow`
+- table: `TBAPPROVAL`
+- column: `APPROVERNM`
+- screen: `승인처리`
+- api: `/approval/flow`
+- issue: 결재자 변경 후 승인 이력에는 이전 결재자가 유지되는 상황
 
-## 모듈 4: submission
+### 6. 알림 발송
+- key: `notify_message`
+- table: `TBNOTIFY`
+- column: `RECEIVERNM`
+- screen: `알림이력`
+- api: `/notify/message`
+- issue: 담당자 변경 직후 알림 수신자명이 이전 이름으로 발송되는 상황
 
-- 설명: 조사 제출 관리
-- 대표 테이블: TBINSTSURV
-- 대표 컬럼: CHARGE
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+### 7. 배치 동기화
+- key: `batch_sync`
+- table: `TBBATCHSYNC`
+- column: `SYNCTARGETNM`
+- screen: `배치실행관리`
+- api: `/batch/sync`
+- issue: 야간 배치가 일부 기관을 제외하고 동기화하는 상황
 
-## 모듈 5: charge
+### 8. 감사 이력
+- key: `audit_history`
+- table: `TBAUDITHIST`
+- column: `ACTIONUSERNM`
+- screen: `감사로그조회`
+- api: `/audit/history`
+- issue: 작업자명 변경 후 과거 감사 로그에는 당시 이름이 남는 상황
 
-- 설명: 담당자 이력/동기화
-- 대표 테이블: TBCHARGEHIST
-- 대표 컬럼: CHARGENM
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+### 9. 통계 리포트
+- key: `report_metric`
+- table: `TBREPORTMETRIC`
+- column: `DISPLAYNM`
+- screen: `통계리포트`
+- api: `/report/metric`
+- issue: 리포트 생성 시점의 표시명이 이후 기준정보와 다르게 보이는 상황
 
-## 모듈 6: audit
+### 10. 불일치 케이스 분석
+- key: `discrepancy_case`
+- table: `TBDISCREPANCY`
+- column: `CAUSEMEMO`
+- screen: `데이터불일치분석`
+- api: `/analysis/discrepancy`
+- issue: DB 기준값과 업무 snapshot 값의 차이를 원인별로 분류하는 상황
 
-- 설명: 감사 로그
-- 대표 테이블: TBAUDITLOG
-- 대표 컬럼: ACTIONNM
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+### 11. Nexacro 라이선스 설정
+- key: `nexacro_license`
+- table: `TBCLIENTCONF`
+- column: `LICENSEURL`
+- screen: `클라이언트환경설정`
+- api: `/client/license`
+- issue: launch.html에서 xadl licenseurl을 환경별로 바꾸는 상황
 
-## 모듈 7: batch
+### 12. SVN Git 변경 추적
+- key: `repository_trace`
+- table: `TBREPOCHANGE`
+- column: `REVISIONMEMO`
+- screen: `소스변경추적`
+- api: `/repo/trace`
+- issue: 지난주 금요일 기준 정상 여부와 특정 커밋 이후 변화 원인을 찾는 상황
 
-- 설명: 배치 동기화
-- 대표 테이블: TBBATCHLOG
-- 대표 컬럼: JOBNM
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+### 13. DBeaver 운영 SQL
+- key: `dbeaver_query`
+- table: `TBQUERYBOOK`
+- column: `QUERYTITLE`
+- screen: `운영SQL관리`
+- api: `/query/book`
+- issue: 운영자가 서브쿼리 없이 조인 기반 확인 SQL을 작성해야 하는 상황
 
-## 모듈 8: notification
+## 분석 관점 1
 
-- 설명: 알림 발송
-- 대표 테이블: TBNOTIFY
-- 대표 컬럼: RECEIVERNM
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+제출 시점의 값을 남겨야 하는 요구와 현재 기준정보를 보여줘야 하는 요구가 충돌할 수 있다.
+AI 개발자는 이 문장을 문서 chunk로만 보지 말고, 관련 Java/SQL/Nexacro 파일과 연결되는 메타데이터로 활용해야 합니다.
 
-## 모듈 9: report
+## 분석 관점 2
 
-- 설명: 통계 리포트
-- 대표 테이블: TBREPORT
-- 대표 컬럼: REPORTNM
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+운영 문의에는 대개 기관코드, 기준일, 화면명, 담당자명이 함께 포함된다.
+AI 개발자는 이 문장을 문서 chunk로만 보지 말고, 관련 Java/SQL/Nexacro 파일과 연결되는 메타데이터로 활용해야 합니다.
 
-## 모듈 10: discrepancy
+## 분석 관점 3
 
-- 설명: 데이터 불일치 분석
-- 대표 테이블: TBDISCREPANCY
-- 대표 컬럼: REASON
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+AI는 소스 검색만 하지 말고 화면 이벤트에서 SQL 컬럼까지 이어지는 경로를 찾아야 한다.
+AI 개발자는 이 문장을 문서 chunk로만 보지 말고, 관련 Java/SQL/Nexacro 파일과 연결되는 메타데이터로 활용해야 합니다.
 
-## 모듈 11: approval
+## 분석 관점 4
 
-- 설명: 승인/반려 관리
-- 대표 테이블: TBAPPROVAL
-- 대표 컬럼: APPROVERNM
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+Tibero 환경에서는 일반 SELECT와 JOIN 기반 진단 SQL을 우선 제공한다.
+AI 개발자는 이 문장을 문서 chunk로만 보지 말고, 관련 Java/SQL/Nexacro 파일과 연결되는 메타데이터로 활용해야 합니다.
 
-## 모듈 12: history
+## 분석 관점 5
 
-- 설명: 변경 이력 관리
-- 대표 테이블: TBHISTORY
-- 대표 컬럼: CHANGEDESC
-- 포함 파일: Controller, Service, Mapper, Domain, MyBatis XML, Nexacro JS, SQL, 업무문서
-- AI 테스트 포인트: 화면 호출에서 DB 컬럼까지 추적 가능한지 확인
+서브쿼리 없이 조건을 분해하면 DBeaver에서 운영자가 단계별로 검증하기 쉽다.
+AI 개발자는 이 문장을 문서 chunk로만 보지 말고, 관련 Java/SQL/Nexacro 파일과 연결되는 메타데이터로 활용해야 합니다.
 
-## 사용 방법
+## 분석 관점 6
 
-1. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-2. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-3. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-4. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-5. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-6. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-7. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-8. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-9. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-10. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-11. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-12. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-13. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-14. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-15. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-16. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-17. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-18. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-19. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-20. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-21. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-22. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-23. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-24. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-25. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-26. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-27. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-28. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-29. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-30. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-31. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-32. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-33. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-34. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-35. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-36. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-37. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-38. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-39. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-40. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-41. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-42. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-43. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-44. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-45. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-46. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-47. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-48. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
-49. GitHub 저장소에 업로드합니다.
-   - AI 개발자는 파일 단위가 아니라 메서드, SQL, transaction 단위로 청킹해야 합니다.
-   - Java Service의 changeNameWithoutSnapshotSync 로직은 의도적으로 snapshot을 갱신하지 않습니다.
-   - XML Mapper의 updateNameOnly와 updateSnapshot을 구분해서 lineage를 구성해야 합니다.
+Nexacro transaction id는 백엔드 URL과 업무 이벤트를 연결하는 중요한 단서다.
+AI 개발자는 이 문장을 문서 chunk로만 보지 말고, 관련 Java/SQL/Nexacro 파일과 연결되는 메타데이터로 활용해야 합니다.
+
+## 분석 관점 7
+
+SVN revision 또는 Git commit은 기능 변경 시점 추정에 사용한다.
+AI 개발자는 이 문장을 문서 chunk로만 보지 말고, 관련 Java/SQL/Nexacro 파일과 연결되는 메타데이터로 활용해야 합니다.
+
+## 분석 관점 8
+
+동기화 배치가 제외한 기관은 현재값과 snapshot 값이 오래 다를 수 있다.
+AI 개발자는 이 문장을 문서 chunk로만 보지 말고, 관련 Java/SQL/Nexacro 파일과 연결되는 메타데이터로 활용해야 합니다.
+
+## 분석 관점 9
+
+감사 이력의 이름은 당시 작업자명을 보존하는 것이 정상 설계일 수 있다.
+AI 개발자는 이 문장을 문서 chunk로만 보지 말고, 관련 Java/SQL/Nexacro 파일과 연결되는 메타데이터로 활용해야 합니다.
+
+## 분석 관점 10
+
+불일치가 모두 오류는 아니므로 설계 의도, 누락, 배치 실패를 분리해야 한다.
+AI 개발자는 이 문장을 문서 chunk로만 보지 말고, 관련 Java/SQL/Nexacro 파일과 연결되는 메타데이터로 활용해야 합니다.
